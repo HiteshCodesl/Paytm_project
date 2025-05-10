@@ -1,19 +1,25 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
-const {JWT_SECRET} = require("../config")
+const { JWT_SECRET } = require("../config")
 
-export const authMiddleware = (req, res, next)=>{
-   const token = req.headers[authorization];
+const authMiddleware = (req, res, next) => {
+    const authHeader = req.headers.authorization;
 
-   const decoded = jwt.verify(token, JWT_SECRET);
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(403).json({message: "Token is Invalid"});
+    }
+    const token = authHeader.split(" ")[1];
 
-   if(decoded){
-    req.userId = decoded.userId;
-    next();
-   }
-   else{
-    return res.status(403).json({
-        message: "invalid creds"
-    })
-   }
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        req.userId = decoded.userId;
+        next();
+        
+    } catch (err) {
+        return res.status(403).json({ message: "not a jwt" })
+    }
+}
+
+module.exports = {
+    authMiddleware
 }
