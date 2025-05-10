@@ -1,14 +1,14 @@
 
 const mongoose = require("mongoose");
  
-mongoose.connect("mongodb+srv://hiteshnavare:AvHv1ImcFG5OPJdI@cluster0.j1065.mongodb.net/paytm-karo")
+mongoose.connect("mongodb+srv://hiteshnavare:zPQHcEsRU26V3i7e@cluster0.j1065.mongodb.net/paytm-karo")
 
-const UserSchema =new mongoose.Schema({
-    fristName: {
+const userSchema =new mongoose.Schema({
+    firstname: {
         type: String, 
         required: true
     },
-    lastName: {
+    lastname: {
         type: String,
         required: true
     },
@@ -22,4 +22,8 @@ const UserSchema =new mongoose.Schema({
     }
 })
 
-export const userModel = mongoose.model("user", UserSchema);
+const UserModel = mongoose.model("user", userSchema);
+
+module.exports = {
+    UserModel
+}
