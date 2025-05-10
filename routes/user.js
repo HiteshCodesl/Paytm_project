@@ -107,7 +107,22 @@ catch(e){
 }
 });
 
-router.get("/bulk", (req, res)=>{
-    
+router.get("/bulk", async (req, res) => {
+    const filter = req.query.filter || "";
+
+    const users = await UserModel.find({
+        $or: [
+        {firstname:{"$regex": filter, $options: "i"}},
+        {lastname: {"$regex": filter, $options: "i"}}
+        ]
+    })
+console.log(filter);
+    res.json({
+        user: users.map(user => ({
+            firstName: user.firstname,
+            lastName: user.lastname,
+        }))
+    })
 })
+
 module.exports = router;
