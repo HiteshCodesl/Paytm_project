@@ -3,8 +3,8 @@ const { z } = require("zod");
 const {UserModel} = require("../db")
 const router = express.Router();
 const jwt = require("jsonwebtoken");
-const JWT_SECRET = require("../config");
-
+const {JWT_SECRET} = require("../config");
+const { authMiddleware } = require("./middleware");
 
 const signupbody = z.object({
         firstname: z.string(),
@@ -26,7 +26,7 @@ router.post("/signup", async(req, res)=>{
      const existingUser = await UserModel.findOne({email: req.body.email})
 
       if(existingUser){
-         res.status(400).json({
+         return res.status(400).json({
             message: "Email Already exists"
         })
     }
@@ -56,25 +56,58 @@ router.post("/signin", async(req, res)=>{
             message: "Invalid Credentials"
         })
     }
-    const alreadyUser = await UserModel.findOne({
-        email: req.body.email,
-        password: req.body.password
-    });
-
-    if(alreadyUser){
-        const token = jwt.sign({
-            userId : alreadyUser._id
-        }, JWT_SECRET)
+    try{
+        const alreadyUser = await UserModel.findOne({
+            email: req.body.email,
+            password: req.body.password
+        });
     
-
-    res.json({
-        token: token
-    })
-    return;
-}
-   return res.status(401).json({
-    message: "Error while logged in"
-   })
+        if(alreadyUser){
+            const token = jwt.sign({
+                userId : alreadyUser._id
+            }, JWT_SECRET)
+        
+        res.json({
+            token: token
+        })
+        }
+    }
+    catch(err){
+        res.status(404).json({message: "error"})
+    }
+   
+    
 })
 
+const updateBody = z.object({
+    firstname: z.string().optional(),
+    lastname: z.string().optional(),
+    email: z.string().email().optional(),
+    password: z.string().min(8).max(16).optional()
+})
+
+router.put("/update",authMiddleware, async(req, res)=>{
+    const {success}  = updateBody.safeParse(req.body);
+
+    if(!success){
+        res.status(400).json({
+            message: "Invalid credentials"
+        })
+    }
+try{
+      await UserModel.updateOne({
+        _id: req.userId }, req.body)
+
+        res.status(200).json({
+            message: "User updated"
+        })
+    }
+catch(e){
+    console.log("error while updating the user")
+}
+});
+
+router.get("/bulk", (req, res)=>{
+    
+})
 module.exports = router;
