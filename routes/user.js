@@ -1,6 +1,6 @@
 const express = require("express");
 const { z } = require("zod");
-const {UserModel} = require("../db")
+const {UserModel, AccountModel} = require("../db")
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 const {JWT_SECRET} = require("../config");
@@ -32,6 +32,13 @@ router.post("/signup", async(req, res)=>{
     }
 
     const user = await UserModel.create(body);
+
+    const userId = user._id;
+
+    await AccountModel.create({
+        userId,
+        balance: 1 + Math.random() * 10000
+    })
 
     const token = jwt.sign({
         userId:  user._id
@@ -107,22 +114,23 @@ catch(e){
 }
 });
 
-router.get("/bulk", async (req, res) => {
+router.get("/bulk", async(req, res)=>{
     const filter = req.query.filter || "";
 
     const users = await UserModel.find({
-        $or: [
-        {firstname:{"$regex": filter, $options: "i"}},
-        {lastname: {"$regex": filter, $options: "i"}}
+        $or:[
+            {firstname:{$regex: filter, $options: "i" }},
+            {lastname:{$regex: filter, $options: "i"  }}
         ]
     })
-console.log(filter);
+
     res.json({
-        user: users.map(user => ({
-            firstName: user.firstname,
-            lastName: user.lastname,
+        user: users.map(user =>({
+            firstname: user.firstname,
+            lastname:  user.lastname,
         }))
     })
 })
+  
 
 module.exports = router;
